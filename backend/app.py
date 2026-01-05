@@ -2,12 +2,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
 import numpy as np
+import os
 
 app = Flask(__name__)
 CORS(app)   #enable CORS for all routes
 
 # Load the trained model
-model = joblib.load("nids_logistic_regression.pkl")
+model_path = os.path.join(os.path.dirname(__file__), "..", "models", "nids_logistic_regression.pkl")
+model = joblib.load(model_path)
 
 @app.route('/', methods=["GET"])
 def home():

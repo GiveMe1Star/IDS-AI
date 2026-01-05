@@ -1,103 +1,135 @@
+# 🛡️ IDS-AI: Network Intrusion Detection System
 
+Hệ thống phát hiện xâm nhập mạng sử dụng trí tuệ nhân tạo (AI). Dự án cung cấp REST API để dự đoán và giao diện web để phân tích thủ công.
 
-# IDS-AI: Network Intrusion Detection System
+## 📁 Cấu trúc thư mục
 
-An AI-driven network intrusion detection system (NIDS) that exposes a REST API for predictions and ships with a lightweight frontend for manual exploration. A pre-trained logistic regression model (serialized with `joblib`) powers the inference backend, allowing you to classify network traffic as benign or malicious using 20 engineered features.
+```
+IDS-AI/
+├── backend/                  # API server
+│   ├── app.py               # Flask application chính
+│   └── test_api.py          # Script test API
+├── frontend/                 # Giao diện người dùng
+│   ├── App_UI.html          # Giao diện chính (đầy đủ tính năng)
+│   └── frontend.html        # Giao diện đơn giản
+├── models/                   # Machine Learning models
+│   ├── nids_logistic_regression.pkl    # Model chính (Logistic Regression)
+│   ├── xgboost_model.pkl               # Model XGBoost
+│   ├── intrusion_detection_model.pkl   # Model thay thế
+│   ├── X_test.pkl                      # Test features
+│   └── y_test.pkl                      # Test labels
+├── data/                     # Dữ liệu và logs
+│   ├── snort_logs.csv       # Log từ Snort IDS
+│   ├── snort_insights.csv   # Phân tích Snort
+│   ├── synthetic_dataset.xlsx
+│   └── alert                # Alert logs từ Snort
+├── notebooks/                # Jupyter notebooks
+│   └── NIDS (1).ipynb       # Notebook phân tích và training
+├── scripts/                  # Scripts tiện ích
+│   └── snort_log_to_csv.py  # Chuyển đổi Snort log sang CSV
+└── README.md
+```
 
-## Repository structure
+## 🚀 Cài đặt
 
-| Path | Description |
-| ---- | ----------- |
-| `app.py` | Flask application that loads the trained model and serves `/predict` for intrusion inference. |
-| `frontend.html` | Minimal web UI that lets users supply feature values and view prediction results. |
-| `test_api.py` | Simple script that submits a sample payload to the API for smoke testing. |
-| `snort_log_to_csv.py` | Utility that converts Snort IDS alerts into a CSV file for downstream analysis. |
-| `*.pkl` | Serialized machine-learning assets, including logistic regression and XGBoost models. |
-| `*.xlsx`, `*.xls`, `*.csv` | Example datasets and exported insights for experimentation. |
+### Yêu cầu
+- Python 3.10+
+- pip
 
-## Requirements
+### Cài đặt dependencies
 
-  - Python 3.10+
-  - Recommended packages:
-    ```bash
-    pip install flask flask-cors joblib numpy requests
-    ```
-  - (Optional) Jupyter Notebook if you plan to explore the bundled `NIDS (1).ipynb` notebook.
+```bash
+pip install flask flask-cors joblib numpy requests
+```
 
-## Getting started
+## 💻 Sử dụng
 
-1.  **Clone the repository and enter the project directory**
-    ```bash
-    git clone <repo-url>
-    cd IDS-AI
-    ```
-2.  **Create and activate a virtual environment (optional but recommended)**
-    ```bash
-    python -m venv .venv
-    source .venv/bin/activate  # Linux / macOS
-    .venv\Scripts\activate     # Windows
-    ```
-3.  **Install dependencies**
-    ```bash
-    pip install flask flask-cors joblib numpy requests
-    ```
+### 1. Khởi động API Server
 
-## Running the API backend
+```bash
+cd backend
+python app.py
+```
 
-1.  Ensure the serialized model (`nids_logistic_regression.pkl`) is located in the project root (it is included in the repo).
-2.  Start the Flask server:
-    ```bash
-    python app.py
-    ```
-3.  The API listens on `http://127.0.0.1:5000` by default. You should see `NIDS API is running!` when visiting the root endpoint in a browser.
+Server sẽ chạy tại `http://127.0.0.1:5000`
 
-### Predicting intrusions via API
+### 2. Mở giao diện web
 
-Send a `POST` request to `/predict` with a JSON body containing a `features` array of 20 numeric values:
+Mở file `frontend/App_UI.html` trong trình duyệt (đảm bảo server đang chạy).
+
+### 3. Test API
+
+```bash
+cd backend
+python test_api.py
+```
+
+Hoặc dùng curl:
 
 ```bash
 curl -X POST http://127.0.0.1:5000/predict \
   -H "Content-Type: application/json" \
-  -d '{"features": [0.12, -1.5, ... 20 values total ...]}'
+  -d '{"features": [0, 3, 1, 0, 4578, 9254, 0, 0, 1, 1, 5, 0, 1, 1, 0, 1, 0, 1, 0, 0]}'
 ```
 
-The API responds with the predicted class (`0` for normal, `1` for intrusion) and the class probabilities.
+## 📊 Các đặc trưng (Features)
 
-To sanity-check the service you can also run:
+Hệ thống phân tích 20 đặc trưng mạng:
+
+| # | Tên | Mô tả |
+|---|-----|-------|
+| 1 | Duration | Thời gian kết nối (giây) |
+| 2 | Protocol Type | Loại giao thức (TCP, UDP, ICMP) |
+| 3 | Service | Dịch vụ mạng đích |
+| 4 | Flag | Trạng thái kết nối |
+| 5 | Source Bytes | Bytes gửi từ nguồn |
+| 6 | Destination Bytes | Bytes gửi từ đích |
+| 7 | Land | Kết nối cùng host/port |
+| 8 | Wrong Fragment | Số fragment lỗi |
+| 9 | Urgent | Số gói tin urgent |
+| 10 | Hot | Số chỉ báo "hot" |
+| 11 | Failed Logins | Số lần đăng nhập thất bại |
+| 12 | Logged In | Đăng nhập thành công (0/1) |
+| 13 | # Compromised | Số điều kiện bị xâm phạm |
+| 14 | Root Shell | Có shell root (0/1) |
+| 15 | Su Attempted | Thử lệnh su (0/1) |
+| 16 | # Root | Số truy cập root |
+| 17 | # File Creations | Số file được tạo |
+| 18 | # Shells | Số shell prompts |
+| 19 | # Access Files | Số thao tác với access control files |
+| 20 | # Outbound Commands | Số lệnh outbound trong FTP |
+
+## 🔧 Scripts tiện ích
+
+### Chuyển đổi Snort log
 
 ```bash
-python test_api.py
-```
-
-which submits a pre-canned example payload.
-
-## Using the frontend
-
-Open `frontend.html` in a browser while the Flask server is running. The page renders 20 numeric inputs corresponding to the model's features and displays the prediction returned by the API.
-
-> **Tip:** If you host the backend on a different machine or port, edit the `fetch` URL defined in `frontend.html` accordingly.
-
-## Converting Snort logs to CSV
-
-The `snort_log_to_csv.py` utility parses a Snort alert log and writes a structured CSV file with attack type, protocol, and source/destination IPs. Update `log_file` and `output_csv` in the script to match your environment, then run:
-
-```bash
+cd scripts
 python snort_log_to_csv.py
 ```
 
-## Model assets
+Chuyển đổi alert log của Snort IDS thành file CSV để phân tích.
 
-  - `nids_logistic_regression.pkl`: Primary model used by the API.
-  - `nids_model_log_reg.pkl`, `intrusion_detection_model.pkl`, `xgboost_model.pkl`: Alternative or experimental models retained for future comparison.
+## 📝 API Response
 
-The repository also ships `X_test.pkl` and `y_test.pkl` for offline evaluation, along with synthetic datasets (`synthetic_dataset.xlsx`, `synthetic_dataset.xls`).
+```json
+{
+  "prediction": 1,
+  "probability": [[0.15, 0.85]]
+}
+```
 
-## Extending the project
+- `prediction`: `0` = Bình thường, `1` = Xâm nhập
+- `probability`: Xác suất cho mỗi class
 
-  - Retrain or swap the model: load your own scikit-learn or XGBoost estimator, export it with `joblib.dump`, and update `app.py` to reference the new file.
-  - Integrate streaming data sources: adapt the API to ingest live traffic statistics and log predictions.
-  - Harden for production: consider adding authentication, input validation, and deployment automation.
+## 🤝 Đóng góp
 
-## License
+1. Fork repository
+2. Tạo branch mới (`git checkout -b feature/TinhNangMoi`)
+3. Commit thay đổi (`git commit -m 'Thêm tính năng mới'`)
+4. Push lên branch (`git push origin feature/TinhNangMoi`)
+5. Tạo Pull Request
 
-Specify your project's license here (e.g., MIT, Apache 2.0). Update this section if you adopt a formal license.
+## 📄 License
+
+MIT License
